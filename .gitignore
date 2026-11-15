@@ -1,0 +1,22 @@
+# Java
+*.class
+*.jar
+*.war
+target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# React
+node_modules/
+dist/
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
