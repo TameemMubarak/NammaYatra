@@ -1,5 +1,7 @@
 package com.nammayatra.security;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
@@ -57,13 +59,10 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-
+    .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
     .requestMatchers("/api/auth/**").permitAll()
-
     .requestMatchers("/api/passenger/**").hasRole("PASSENGER")
-
     .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
     .anyRequest().authenticated()
 )
 
