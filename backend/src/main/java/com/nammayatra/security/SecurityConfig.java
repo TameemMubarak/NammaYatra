@@ -1,5 +1,8 @@
 package com.nammayatra.security;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -62,6 +65,12 @@ public class SecurityConfig {
     .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
     .anyRequest().authenticated()
+)
+
+.exceptionHandling(exception -> exception
+    .authenticationEntryPoint(
+        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+    )
 )
 
             .addFilterBefore(
