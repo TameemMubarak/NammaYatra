@@ -36,5 +36,15 @@ List<JourneySeat> findSeatsForUpdate(
         @Param("seatIds") List<Long> seatIds
 );
 
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("""
+    SELECT s
+    FROM JourneySeat s
+    WHERE s.id IN :seatIds
+    ORDER BY s.id
+    """)
+List<JourneySeat> findSeatsForCancellation(
+        @Param("seatIds") List<Long> seatIds
+);
 
 }

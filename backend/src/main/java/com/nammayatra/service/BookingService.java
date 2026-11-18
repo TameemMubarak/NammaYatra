@@ -1,5 +1,7 @@
 package com.nammayatra.service;
 
+import com.nammayatra.dto.CancellationResponse;
+
 import com.nammayatra.dto.BookingResponse;
 import com.nammayatra.dto.CreateBookingRequest;
 
@@ -53,6 +55,130 @@ public class BookingService {
         this.journeySeatRepository = journeySeatRepository;
         this.userRepository = userRepository;
     }
+
+
+@Transactional
+public CancellationResponse cancelBooking(
+        String passengerEmail,
+        String bookingReference) {
+
+    String email = passengerEmail.trim().toLowerCase(Locale.ROOT);
+
+    User passenger = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Passenger account not found"
+            ));
+
+    Booking booking = bookingRepository.findForCancellation(
+            bookingReference,
+            passenger.getId()
+    ).orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Booking not found"
+    ));
+
+    if (booking.getStatus() != BookingStatus.CONFIRMED) {
+        throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "This booking is already cancelled"
+        );
+    }
+
+    Journey journey = booking.getJourney();
+
+    if (!journey.getDepartureDateTime().isAfter(LocalDateTime.now())) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Cannot cancel a journey that has already departed"
+        );
+    }
+
+    List<BookingSeat> bookingSeats =
+            bookingSeatRepository.findByBookingId(booking.getId());
+
+    List<Long> seatIds = bookingSeats.stream()
+            .map(bookingSeat -> bookingSeat.getJourneySeat().getId())
+            .toList();
+
+    List<JourneySeat> lockedSeats =
+            journeySeatRepository.findSeatsForCancellation(seatIds);
+
+    if (lockedSeats.size() != seatIds.size()) {
+        throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Unable to verify all booking seats"
+        );
+    }
+
+    for (JourneySeat seat : lockedSeats) {
+
+        if (seat.getStatus() != SeatStatus.BOOKED) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Booking seat inventory is inconsistent"
+            );
+        }
+
+        seat.setStatus(SeatStatus.AVAILABLE);
+    }
+
+    booking.setStatus(BookingStatus.CANCELLED);
+
+    return new CancellationResponse(
+            "Booking cancelled successfully",
+            booking.getBookingReference(),
+            booking.getStatus()
+    );
+}
+
+
+@Transactional(readOnly = true)
+public List<BookingResponse> getMyBookings(String passengerEmail) {
+
+    String email = passengerEmail.trim().toLowerCase(Locale.ROOT);
+
+    User passenger = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Passenger account not found"));
+
+    List<Booking> bookings =
+            bookingRepository.findByPassengerIdOrderByBookedAtDesc(
+                    passenger.getId()
+            );
+
+    List<BookingResponse> responses = new ArrayList<>();
+
+    for (Booking booking : bookings) {
+
+        List<BookingSeat> bookingSeats =
+                bookingSeatRepository.findByBookingId(booking.getId());
+
+        List<String> seatNumbers = bookingSeats.stream()
+                .map(bookingSeat ->
+                        bookingSeat.getJourneySeat().getSeatNumber())
+                .toList();
+
+        Journey journey = booking.getJourney();
+
+        BookingResponse response = new BookingResponse(
+                booking.getBookingReference(),
+                journey.getId(),
+                journey.getSource(),
+                journey.getDestination(),
+                seatNumbers,
+                booking.getTotalAmount(),
+                booking.getStatus(),
+                booking.getBookedAt()
+        );
+
+        responses.add(response);
+    }
+
+    return responses;
+}
+
+
 
     @Transactional
     public BookingResponse createBooking(

@@ -1,5 +1,9 @@
 package com.nammayatra.controller;
 
+import java.util.List;
+
+import com.nammayatra.dto.CancellationResponse;
+
 import com.nammayatra.dto.BookingResponse;
 import com.nammayatra.dto.CreateBookingRequest;
 import com.nammayatra.service.BookingService;
@@ -21,6 +25,8 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
+
+
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
             @Valid @RequestBody CreateBookingRequest request,
@@ -35,4 +41,33 @@ public class BookingController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+
+@GetMapping
+public ResponseEntity<List<BookingResponse>> getMyBookings(
+        Authentication authentication) {
+
+    String passengerEmail = authentication.getName();
+
+    List<BookingResponse> bookings =
+            bookingService.getMyBookings(passengerEmail);
+
+    return ResponseEntity.ok(bookings);
+}
+
+@DeleteMapping("/{bookingReference}")
+public ResponseEntity<CancellationResponse> cancelBooking(
+        @PathVariable String bookingReference,
+        Authentication authentication) {
+
+    String passengerEmail = authentication.getName();
+
+    CancellationResponse response =
+            bookingService.cancelBooking(
+                    passengerEmail,
+                    bookingReference
+            );
+
+    return ResponseEntity.ok(response);
+}
+
 }
