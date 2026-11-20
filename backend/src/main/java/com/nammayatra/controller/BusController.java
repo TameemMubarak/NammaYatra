@@ -6,6 +6,9 @@ import com.nammayatra.service.BusService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 
 import java.util.List;
 
@@ -68,6 +71,18 @@ public class BusController {
                 busService.updateBus(id, bus)
         );
     }
+
+
+    // ACTIVATE BUS
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<Bus> activateBus(
+            @PathVariable("id") Long id) {
+
+        return ResponseEntity.ok(
+                busService.activateBus(id)
+        );
+    }
+
 
     // DEACTIVATE BUS
     @DeleteMapping("/{id}")

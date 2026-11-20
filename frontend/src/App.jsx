@@ -1,11 +1,18 @@
+
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import MyBookings from './pages/MyBookings';
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminBuses from './pages/AdminBuses';
+import AdminJourneys from './pages/AdminJourneys';
 
 import { AuthProvider } from './context/AuthContext';
 
@@ -73,53 +80,16 @@ function App() {
                 <ProtectedRoute allowedRoles={['PASSENGER']} />
               }
             >
-              <Route
-                path="/bookings"
-                element={
-                  <FeaturePlaceholder
-                    title="My Bookings"
-                    description="View your bookings, booking references, journey details and cancellation options."
-                  />
-                }
-              />
+              <Route path="/bookings" element={<MyBookings />} />
             </Route>
 
             {/* Admin only */}
-            <Route
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']} />
-              }
-            >
-              <Route
-                path="/admin"
-                element={
-                  <FeaturePlaceholder
-                    title="Admin Dashboard"
-                    description="Manage the buses and journeys supported by the NammaYatra backend."
-                  />
-                }
-              />
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+  <Route path="/admin" element={<AdminDashboard />} />
+  <Route path="/admin/buses" element={<AdminBuses />} />
+  <Route path="/admin/journeys" element={<AdminJourneys />} />
+</Route>
 
-              <Route
-                path="/admin/buses"
-                element={
-                  <FeaturePlaceholder
-                    title="Bus Management"
-                    description="Add, view, update and deactivate buses."
-                  />
-                }
-              />
-
-              <Route
-                path="/admin/journeys"
-                element={
-                  <FeaturePlaceholder
-                    title="Journey Management"
-                    description="Schedule and manage journeys using the existing backend functionality."
-                  />
-                }
-              />
-            </Route>
 
             {/* Unknown routes */}
             <Route

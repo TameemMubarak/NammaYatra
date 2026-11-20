@@ -4,6 +4,8 @@ import com.nammayatra.entity.Bus;
 import com.nammayatra.repository.BusRepository;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -101,9 +103,23 @@ public class BusService {
         return busRepository.save(existingBus);
     }
 
+//re activate bus 
+@Transactional
+public Bus activateBus(Long id) {
+    Bus bus = busRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Bus not found"
+            ));
+
+    bus.setActive(true);
+    return busRepository.save(bus);
+}
+
     // DEACTIVATE BUS
     @Transactional
     public void deactivateBus(Long id) {
+
 
         Bus bus = getBusById(id);
         bus.setActive(false);
