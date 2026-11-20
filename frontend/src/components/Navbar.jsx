@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+
 import {
   Compass,
   Menu,
@@ -10,6 +11,7 @@ import {
   LayoutDashboard,
   Ticket,
   X,
+  Sparkles,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -19,11 +21,34 @@ function Navbar() {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isAdmin = user?.role === 'ADMIN';
   const isPassenger = user?.role === 'PASSENGER';
+
+  // Detect scrolling for the glass navbar effect.
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 15);
+    };
+
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Close menus whenever the user navigates.
+  useEffect(() => {
+    setDropdownOpen(false);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   function closeMenus() {
     setDropdownOpen(false);
@@ -36,217 +61,327 @@ function Navbar() {
     navigate('/');
   }
 
-  const navLinkClass =
-    'transition hover:text-tangerine';
+  const navLinkClass = ({ isActive }) =>
+    `relative py-2 text-sm font-semibold transition-colors duration-200 ${
+      isActive
+        ? 'text-orange-600'
+        : 'text-charcoal/75 hover:text-orange-600'
+    }`;
+
+  const buttonClass =
+    'rounded-full bg-charcoal px-6 py-3 text-sm font-bold text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-tangerine hover:shadow-lg';
 
   return (
-    <nav className="relative z-50 flex items-center justify-between border-b border-black/5 bg-cream px-6 py-5 md:px-12 lg:px-20">
+    <nav
+      className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
+        scrolled
+          ? 'border-white/60 bg-white/90 py-2 shadow-lg shadow-black/5 backdrop-blur-2xl'
+          : 'border-white/50 bg-white/75 py-3 shadow-sm backdrop-blur-xl'
+      }`}
+    >
+      {/* Decorative gradient line */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-lime via-tangerine to-orange-400" />
 
-      {/* Logo */}
-      <Link to="/" onClick={closeMenus} className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime">
-          <Compass size={23} strokeWidth={2.5} />
-        </div>
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 md:px-10 lg:px-16">
 
-        <span className="text-2xl font-bold tracking-tight">
-          namma<span className="text-tangerine">yatra.</span>
-        </span>
-      </Link>
+        {/* LOGO */}
+        <Link
+          to="/"
+          onClick={closeMenus}
+          className="group flex items-center gap-2.5"
+        >
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-lime to-[#FFB18F] shadow-sm transition duration-300 group-hover:rotate-6 group-hover:scale-105">
+            <Compass size={25} strokeWidth={2.5} />
+          </div>
 
-      {/* Desktop navigation */}
-      <div className="hidden items-center gap-9 text-sm font-semibold md:flex">
+          <div>
+            <span className="text-2xl font-black tracking-tight text-charcoal">
+              namma<span className="text-tangerine">yatra.</span>
+            </span>
 
-        <Link to="/" className={navLinkClass}>
-          Explore
+            <p className="-mt-1 text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400">
+              Find your way
+            </p>
+          </div>
         </Link>
 
-        {isPassenger && (
-          <Link to="/bookings" className={navLinkClass}>
-            My Bookings
-          </Link>
-        )}
+        {/* DESKTOP NAVIGATION */}
+        <div className="hidden items-center gap-8 lg:flex">
 
-        {isAdmin && (
-          <Link to="/admin" className={navLinkClass}>
-            Admin Dashboard
-          </Link>
-        )}
+          <NavLink to="/" end className={navLinkClass}>
+            Explore
+          </NavLink>
 
-        <a href="/#about" className={navLinkClass}>
-          About Us
-        </a>
+          {isPassenger && (
+            <NavLink to="/bookings" className={navLinkClass}>
+              My Bookings
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink to="/admin" className={navLinkClass}>
+              Admin Dashboard
+            </NavLink>
+          )}
+
+          <a
+            href="/#about"
+            className="py-2 text-sm font-semibold text-charcoal/75 transition hover:text-orange-600"
+          >
+            About Us
+          </a>
+
+        </div>
+
+        {/* DESKTOP AUTHENTICATION */}
+        <div className="hidden items-center gap-5 md:flex">
+
+          {!isAuthenticated ? (
+            <>
+              <Link
+                to="/login"
+                className="text-sm font-bold text-charcoal transition hover:text-orange-600"
+              >
+                Login
+              </Link>
+
+              <Link to="/register" className={buttonClass}>
+                Get Started
+                <span className="ml-2">↗</span>
+              </Link>
+            </>
+          ) : (
+            <div className="relative">
+
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className={`flex items-center gap-3 rounded-full border px-3 py-2 transition duration-200 ${
+                  dropdownOpen
+                    ? 'border-orange-200 bg-orange-50'
+                    : 'border-black/5 bg-white/80 hover:border-orange-200 hover:shadow-md'
+                }`}
+                aria-expanded={dropdownOpen}
+                aria-label="Account menu"
+              >
+
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-lime to-[#FFB18F]">
+                  <UserRound size={19} />
+                </div>
+
+                <div className="text-left">
+                  <p className="max-w-32 truncate text-sm font-bold">
+                    {user?.name || 'My Account'}
+                  </p>
+
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    {user?.role || 'User'}
+                  </p>
+                </div>
+
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${
+                    dropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+
+              </button>
+
+              {/* ACCOUNT DROPDOWN */}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-black/5 bg-white/95 py-2 shadow-2xl shadow-black/10 backdrop-blur-xl">
+
+                  <div className="border-b border-gray-100 bg-gradient-to-br from-orange-50 to-white px-5 py-4">
+
+                    <p className="font-bold text-charcoal">
+                      {user?.name}
+                    </p>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      {user?.email}
+                    </p>
+
+                    <span className="mt-3 inline-block rounded-full bg-lime px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                      {user?.role}
+                    </span>
+
+                  </div>
+
+                  <Link
+                    to="/profile"
+                    onClick={closeMenus}
+                    className="flex items-center gap-3 px-5 py-3 text-sm font-medium transition hover:bg-orange-50 hover:text-orange-600"
+                  >
+                    <User size={17} />
+                    My Profile
+                  </Link>
+
+                  {isPassenger && (
+                    <Link
+                      to="/bookings"
+                      onClick={closeMenus}
+                      className="flex items-center gap-3 px-5 py-3 text-sm font-medium transition hover:bg-orange-50 hover:text-orange-600"
+                    >
+                      <Ticket size={17} />
+                      My Bookings
+                    </Link>
+                  )}
+
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={closeMenus}
+                      className="flex items-center gap-3 px-5 py-3 text-sm font-medium transition hover:bg-orange-50 hover:text-orange-600"
+                    >
+                      <LayoutDashboard size={17} />
+                      Admin Dashboard
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 border-t border-gray-100 px-5 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                  >
+                    <LogOut size={17} />
+                    Logout
+                  </button>
+
+                </div>
+              )}
+
+            </div>
+          )}
+
+        </div>
+
+        {/* MOBILE MENU BUTTON */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-xl border border-black/5 bg-white/80 p-2.5 transition hover:bg-orange-50 md:hidden"
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? <X size={23} /> : <Menu size={23} />}
+        </button>
+
       </div>
 
-      {/* Desktop authentication */}
-      <div className="hidden items-center gap-4 md:flex">
+      {/* MOBILE NAVIGATION */}
+      {mobileMenuOpen && (
+        <div className="absolute left-0 right-0 top-full border-t border-white/70 bg-white/95 px-5 py-6 shadow-xl shadow-black/10 backdrop-blur-2xl md:hidden">
 
-        {!isAuthenticated ? (
-          <>
-            <Link to="/login" className="font-semibold">
-              Login
-            </Link>
+          <div className="mx-auto flex max-w-xl flex-col gap-1">
 
-            <Link
-              to="/register"
-              className="rounded-full bg-charcoal px-6 py-3 text-sm font-bold text-white transition hover:bg-tangerine"
+            <NavLink
+              to="/"
+              end
+              onClick={closeMenus}
+              className={navLinkClass}
             >
-              Get Started
-            </Link>
-          </>
-        ) : (
-          <div className="relative">
+              Explore
+            </NavLink>
 
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 transition hover:shadow-md"
-              aria-expanded={dropdownOpen}
+            {isPassenger && (
+              <NavLink
+                to="/bookings"
+                onClick={closeMenus}
+                className={navLinkClass}
+              >
+                My Bookings
+              </NavLink>
+            )}
+
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                onClick={closeMenus}
+                className={navLinkClass}
+              >
+                Admin Dashboard
+              </NavLink>
+            )}
+
+            <a
+              href="/#about"
+              onClick={closeMenus}
+              className="py-2 text-sm font-semibold text-charcoal/75 transition hover:text-orange-600"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lime">
-                <UserRound size={19} />
-              </div>
+              About Us
+            </a>
 
-              <div className="text-left">
-                <p className="max-w-32 truncate text-sm font-semibold">
-                  {user?.name || 'My Account'}
-                </p>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                  {user?.role || 'User'}
-                </p>
-              </div>
+            {isAuthenticated ? (
+              <>
 
-              <ChevronDown
-                size={16}
-                className={`transition-transform ${
-                  dropdownOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
+                <div className="my-3 rounded-2xl bg-gradient-to-br from-orange-50 to-lime/30 p-4">
 
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-3 w-60 overflow-hidden rounded-2xl border border-gray-100 bg-white py-2 shadow-xl">
+                  <div className="flex items-center gap-3">
 
-                <div className="border-b border-gray-100 px-4 py-3">
-                  <p className="font-semibold">{user?.name}</p>
-                  <p className="truncate text-xs text-gray-500">
-                    {user?.email}
-                  </p>
-                  <span className="mt-2 inline-block rounded-full bg-lime/50 px-2 py-1 text-[10px] font-bold uppercase">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm">
+                      <UserRound size={21} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">
+                        {user?.name}
+                      </p>
+
+                      <p className="truncate text-xs text-gray-500">
+                        {user?.email}
+                      </p>
+                    </div>
+
+                  </div>
+
+                  <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-orange-600">
                     {user?.role}
-                  </span>
+                  </p>
+
                 </div>
 
                 <Link
                   to="/profile"
                   onClick={closeMenus}
-                  className="flex items-center gap-3 px-4 py-3 text-sm transition hover:bg-gray-50"
+                  className="flex items-center gap-3 py-3 text-sm font-semibold"
                 >
-                  <User size={17} />
+                  <User size={18} />
                   My Profile
                 </Link>
-
-                {isPassenger && (
-                  <Link
-                    to="/bookings"
-                    onClick={closeMenus}
-                    className="flex items-center gap-3 px-4 py-3 text-sm transition hover:bg-gray-50"
-                  >
-                    <Ticket size={17} />
-                    My Bookings
-                  </Link>
-                )}
-
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    onClick={closeMenus}
-                    className="flex items-center gap-3 px-4 py-3 text-sm transition hover:bg-gray-50"
-                  >
-                    <LayoutDashboard size={17} />
-                    Admin Dashboard
-                  </Link>
-                )}
 
                 <button
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50"
+                  className="mt-2 flex items-center gap-2 border-t border-black/10 py-4 text-sm font-bold text-red-600"
                 >
-                  <LogOut size={17} />
+                  <LogOut size={18} />
                   Logout
                 </button>
 
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="rounded-lg p-2 transition hover:bg-black/5 md:hidden"
-        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-        aria-expanded={mobileMenuOpen}
-      >
-        {mobileMenuOpen ? <X size={25} /> : <Menu size={25} />}
-      </button>
-
-      {/* Mobile navigation */}
-      {mobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-full border-t border-black/5 bg-cream px-6 py-5 shadow-xl md:hidden">
-
-          <div className="flex flex-col gap-4 text-sm font-semibold">
-
-            <Link to="/" onClick={closeMenus} className={navLinkClass}>
-              Explore
-            </Link>
-
-            {isPassenger && (
-              <Link to="/bookings" onClick={closeMenus} className={navLinkClass}>
-                My Bookings
-              </Link>
-            )}
-
-            {isAdmin && (
-              <Link to="/admin" onClick={closeMenus} className={navLinkClass}>
-                Admin Dashboard
-              </Link>
-            )}
-
-            {isAuthenticated ? (
-              <>
-                <Link to="/profile" onClick={closeMenus} className={navLinkClass}>
-                  My Profile
-                </Link>
-
-                <div className="border-t border-black/10 pt-4">
-                  <p className="text-xs text-gray-500">
-                    {user?.name} · {user?.role}
-                  </p>
-
-                  <button
-                    onClick={handleLogout}
-                    className="mt-3 flex items-center gap-2 text-red-600"
-                  >
-                    <LogOut size={17} />
-                    Logout
-                  </button>
-                </div>
               </>
             ) : (
-              <div className="flex items-center gap-5 border-t border-black/10 pt-4">
-                <Link to="/login" onClick={closeMenus}>
+              <div className="mt-4 flex items-center gap-4 border-t border-black/10 pt-5">
+
+                <Link
+                  to="/login"
+                  onClick={closeMenus}
+                  className="font-bold"
+                >
                   Login
                 </Link>
 
                 <Link
                   to="/register"
                   onClick={closeMenus}
-                  className="rounded-full bg-charcoal px-5 py-3 text-white"
+                  className={buttonClass}
                 >
-                  Get Started
+                  Get Started ↗
                 </Link>
+
               </div>
             )}
+
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-400">
+              <Sparkles size={14} className="text-orange-400" />
+              Your next journey starts here.
+            </div>
 
           </div>
         </div>

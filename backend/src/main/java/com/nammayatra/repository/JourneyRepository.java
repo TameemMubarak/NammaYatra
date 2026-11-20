@@ -33,16 +33,12 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     JOIN FETCH j.bus b
     WHERE j.active = true
       AND b.active = true
-      AND LOWER(j.source) = LOWER(:source)
-      AND LOWER(j.destination) = LOWER(:destination)
       AND j.departureDateTime >= :start
       AND j.departureDateTime < :end
       AND j.departureDateTime > :now
     ORDER BY j.departureDateTime ASC
     """)
-List<Journey> searchAvailableJourneys(
-        @Param("source") String source,
-        @Param("destination") String destination,
+List<Journey> findAvailableJourneysForDate(
         @Param("start") LocalDateTime start,
         @Param("end") LocalDateTime end,
         @Param("now") LocalDateTime now

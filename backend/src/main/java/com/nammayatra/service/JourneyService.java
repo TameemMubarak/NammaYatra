@@ -1,5 +1,6 @@
 package com.nammayatra.service;
 
+import java.util.Map;
 
 import com.nammayatra.dto.JourneySearchResponse;
 import java.time.LocalDate;
@@ -134,14 +135,14 @@ return savedJourney;
                 ));
     }
 
-	public List<JourneySearchResponse> searchJourneys(
+@Transactional(readOnly = true)
+public List<JourneySearchResponse> searchJourneys(
         String source,
         String destination,
         LocalDate date) {
 
     if (source == null || source.isBlank()
             || destination == null || destination.isBlank()) {
-
         throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Source and destination are required"
@@ -155,10 +156,10 @@ return savedJourney;
         );
     }
 
-    String cleanSource = source.trim();
-    String cleanDestination = destination.trim();
+    String cleanSource = normalizeCity(source);
+    String cleanDestination = normalizeCity(destination);
 
-    if (cleanSource.equalsIgnoreCase(cleanDestination)) {
+    if (cleanSource.equals(cleanDestination)) {
         throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Source and destination cannot be the same"
@@ -170,15 +171,18 @@ return savedJourney;
     LocalDateTime now = LocalDateTime.now();
 
     List<Journey> journeys =
-            journeyRepository.searchAvailableJourneys(
-                    cleanSource,
-                    cleanDestination,
+            journeyRepository.findAvailableJourneysForDate(
                     start,
                     end,
                     now
             );
 
     return journeys.stream()
+            .filter(journey ->
+                    normalizeCity(journey.getSource()).equals(cleanSource)
+                    && normalizeCity(journey.getDestination())
+                            .equals(cleanDestination)
+            )
             .map(journey -> new JourneySearchResponse(
                     journey.getId(),
                     journey.getBus().getId(),
@@ -192,5 +196,20 @@ return savedJourney;
                     journey.getBus().getTotalSeats()
             ))
             .toList();
+}
+
+private String normalizeCity(String city) {
+
+    String normalized = city
+            .trim()
+            .replaceAll("\\s+", " ")
+            .toLowerCase(Locale.ROOT);
+
+    Map<String, String> aliases = Map.of(
+            "bangalore", "bengaluru",
+            "bengaluru", "bengaluru"
+    );
+
+    return aliases.getOrDefault(normalized, normalized);
 }
 }
