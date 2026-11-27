@@ -261,5 +261,3 @@ The objective of NammaYatra is to build a practical full-stack application while
 ## 📄 License
 
 This project is distributed under the license specified in the `LICENSE` file.
-
-

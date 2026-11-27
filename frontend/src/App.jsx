@@ -14,9 +14,13 @@ import BookingConfirmation from './pages/BookingConfirmation';
 import SearchResults from './pages/SearchResults';
 import SeatSelection from './pages/SeatSelection';
 
+import AIChatWidget from './components/ai/AIChatWidget';
+
 import AdminDashboard from './pages/AdminDashboard';
 import AdminBuses from './pages/AdminBuses';
 import AdminJourneys from './pages/AdminJourneys';
+
+
 
 import { AuthProvider } from './context/AuthContext';
 
@@ -127,8 +131,8 @@ function App() {
               }
             />
 
-          </Routes>
-
+          </Routes>	
+<AIChatWidget />
         </div>
 
       </BrowserRouter>
